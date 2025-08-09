@@ -16,3 +16,6 @@ export const updateClazzApi = (clazzData) => request.put("/clazzs", clazzData);
 
 //根据id删除班级
 export const deleteClazzByIdApi = (id) => request.delete(`/clazzs/${id}`);
+
+//查询所有班级信息
+export const queryAllClazzApi = () => request.get("/clazzs/list");

@@ -170,6 +170,7 @@ const handleEdit = async (id) => {
   clazzForm.value = result.data;
 };
 
+//删除方法
 const handleDelete = async (id) => {
   ElMessageBox.confirm("您确认删除此数据吗？", "删除班级", {
     confirmButtonText: "确定",
@@ -222,6 +223,7 @@ onMounted(() => {
     </el-form-item>
   </el-form>
   <el-button type="success" @click="add">+新增班级</el-button>
+  <div style="margin-bottom: 15px"></div>
   <!-- {{ searchClazz }} -->
   <!-- 列表展示 -->
   <el-table :data="clazzList" border style="width: 100%" fit>

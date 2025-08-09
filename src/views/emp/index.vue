@@ -1,8 +1,14 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { queryPageApi, addApi } from "@/api/emp";
+import {
+  queryPageApi,
+  addApi,
+  queryInfoApi,
+  updateApi,
+  deleteApi,
+} from "@/api/emp";
 import { queryAllApi } from "@/api/dept";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 const searchEmp = ref({
   name: "",
   gender: "",
@@ -89,16 +95,38 @@ const selectedIds = ref([]);
 const handleSelectionChange = (selection) => {
   selectedIds.value = selection.map((item) => item.id);
 };
-
-// 操作处理
 //编辑方法
-const handleEdit = (id) => {
-  console.log("Edit:", id);
+const handleEdit = async (id) => {
+  dialogFormVisible.value = true;
+  formTitle.value = "修改员工";
+  const result = await queryInfoApi(id);
+  if (result.code) {
+    emp.value = result.data;
+    let exprList = emp.value.exprList;
+    if (exprList && exprList.length > 0) {
+      exprList.forEach((expr) => {
+        expr.date = [expr.begin, expr.end];
+      });
+    }
+  }
 };
 
-//删除方法
+//删除单条数据方法
 const handleDelete = (id) => {
-  console.log("Delete:", id);
+  // console.log("Delete:", id);
+  ElMessageBox.confirm("确定删除该员工吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(async () => {
+    const result = await deleteApi(id);
+    if (result.code) {
+      ElMessage.success("删除成功");
+      search();
+    } else {
+      ElMessage.error(result.msg);
+    }
+  });
 };
 //查询方法
 const search = async () => {
@@ -203,8 +231,10 @@ watch(
   () => {
     if (emp.value.exprList) {
       emp.value.exprList.forEach((expr) => {
-        expr.begin = expr.date[0];
-        expr.end = expr.date[1];
+        if (expr.date && expr.date.length == 2) {
+          expr.begin = expr.date[0];
+          expr.end = expr.date[1];
+        }
       });
     }
   },
@@ -215,7 +245,12 @@ watch(
 const save = async () => {
   empFormRef.value.validate(async (valid) => {
     if (valid) {
-      const result = await addApi(emp.value);
+      let result = null;
+      if (emp.value.id) {
+        result = await updateApi(emp.value);
+      } else {
+        result = await addApi(emp.value);
+      }
       if (result.code) {
         ElMessage.success("操作成功");
         dialogFormVisible.value = false;
@@ -282,9 +317,38 @@ const handleCancel = () => {
 };
 
 //批量删除方法
-const deleteBatch = () => {};
+const deleteBatch = () => {
+  if (selectedIds.value.length == 0) {
+    ElMessage.warning("请选择要删除的员工数据！");
+    return;
+  }
+  ElMessageBox.confirm(
+    `确定删除选中的${selectedIds.value.length}条员工数据吗？`,
+    "提示",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    }
+  ).then(async () => {
+    const result = await deleteApi(selectedIds.value.join(","));
+    if (result.code) {
+      ElMessage.success("删除成功");
+      search();
+    } else {
+      ElMessage.error(result.msg);
+    }
+  });
+};
+//定义上传文件需要的token
+const token = ref("");
+
 //挂载函数
 onMounted(() => {
+  let loginUser = localStorage.getItem("loginUser");
+  if (loginUser) {
+    token.value = JSON.parse(loginUser).token;
+  }
   search();
   queryAllDepts();
 });
@@ -328,6 +392,7 @@ onMounted(() => {
   </el-form>
   <el-button type="primary" @click="add">+新增员工</el-button>
   <el-button type="danger" @click="deleteBatch">-批量删除</el-button>
+  <div style="margin-bottom: 15px"></div>
   <!-- 列表展示 -->
   <el-table
     :data="empList"
@@ -507,6 +572,7 @@ onMounted(() => {
             <el-upload
               class="avatar-uploader"
               action="/api/upload"
+              :headers="{ token: token }"
               :show-file-list="false"
               :on-success="handleAvatarSuccess"
               :before-upload="beforeAvatarUpload"
@@ -566,7 +632,7 @@ onMounted(() => {
           </el-form-item>
         </el-col>
       </el-row>
-      {{ emp }}
+      <!-- {{ emp }} -->
     </el-form>
 
     <template #footer>

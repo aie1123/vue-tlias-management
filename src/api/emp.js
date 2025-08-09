@@ -20,3 +20,6 @@ export const deleteApi = (ids) => request.delete(`/emps?ids=${ids}`);
 
 //查询全部员工信息
 export const queryAllApi = () => request.get("/emps/list");
+
+//修改密码
+export const updatePwdApi = (data) => request.put(`/emps/changePwd`, data);

@@ -106,7 +106,7 @@ onMounted(() => {
   <el-button type="primary" style="float: right" @click="add"
     >+新增部门</el-button
   >
-  <el-table :data="tableData" style="width: 100%">
+  <el-table :data="tableData" style="width: 100%" border>
     <el-table-column type="index" label="序号" width="100" align="center" />
     <el-table-column prop="name" label="部门名称" width="300" align="center" />
     <el-table-column

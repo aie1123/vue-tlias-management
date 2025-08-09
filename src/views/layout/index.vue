@@ -1,4 +1,124 @@
-<script setup></script>
+<script setup>
+import { ref, onMounted } from "vue";
+import { ElMessageBox, ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
+import { updatePwdApi } from "@/api/emp";
+
+const router = useRouter();
+const userName = ref("");
+//表单配置
+const dialogFormVisible = ref(false);
+
+//修改密码表单规则
+const pwdChangeRef = ref();
+
+//// 添加密码强度验证函数
+const validatePassword = (rule, value, callback) => {
+  if (!value) {
+    callback(new Error("密码为必填项"));
+  } else if (value.length < 6) {
+    callback(new Error("密码长度不能少于6位"));
+  } else if (!/[a-zA-Z]/.test(value)) {
+    callback(new Error("密码至少包含一个英文字符"));
+  } else {
+    callback();
+  }
+};
+
+const pwdRules = ref({
+  oldPwd: [
+    { required: true, message: "旧密码为必填项", trigger: "blur" },
+    {
+      validator: (rule, value, callback) => {
+        if (value && value.length < 6) {
+          callback(new Error("密码长度不能少于6位"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+  newPwd: [
+    { required: true, message: "新密码为必填项", trigger: "blur" },
+    { validator: validatePassword, trigger: "blur" },
+  ],
+  newPwdValid: [
+    { required: true, message: "新密码为必填项", trigger: "blur" },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== changePwdForm.value.newPwd) {
+          callback(new Error("两次输入的新密码不一致"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+    { validator: validatePassword, trigger: "blur" },
+  ],
+});
+
+const changePwdForm = ref({
+  id: "",
+  oldPwd: "",
+  newPwd: "",
+  newPwdValid: "",
+});
+
+//重置修改密码表单
+const resetForm = () => {
+  changePwdForm.value = { id: "", oldPwd: "", newPwd: "", newPwdValid: "" };
+  pwdChangeRef.value.resetFields();
+};
+//退出登录
+const logout = () => {
+  ElMessageBox.confirm("是否退出登录？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(() => {
+    localStorage.removeItem("loginUser");
+    ElMessage.success("退出登录成功");
+    router.push("/login");
+  });
+};
+
+//修改密码
+const handleChangePwd = () => {
+  dialogFormVisible.value = true;
+};
+
+//保存密码
+const save = async () => {
+  pwdChangeRef.value.validate(async (valid) => {
+    if (valid) {
+      let loginUser = JSON.parse(localStorage.getItem("loginUser"));
+      let pwdChange = {
+        id: loginUser.id,
+        password: changePwdForm.value.newPwd,
+      };
+      const result = await updatePwdApi(pwdChange);
+      if (result.code) {
+        ElMessage.success("修改密码成功！请重新登录。。。");
+        localStorage.removeItem("loginUser");
+        dialogFormVisible.value = false;
+        router.push("/login");
+      } else {
+        ElMessage.error(result.msg);
+      }
+    }
+  });
+};
+
+//挂载
+onMounted(() => {
+  let loginUser = JSON.parse(localStorage.getItem("loginUser"));
+  if (loginUser) {
+    userName.value = loginUser.name;
+  }
+});
+</script>
 
 <template>
   <div class="common-layout">
@@ -7,17 +127,17 @@
       <el-header class="header">
         <span class="title">Tlias智能学习辅助系统</span>
         <span class="right_tool">
-          <a href="">
+          <a href="javascript:void(0)" @click="handleChangePwd">
             <el-icon>
               <EditPen />
             </el-icon>
             修改密码 &nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
           </a>
-          <a href="">
+          <a href="javascript:void(0)" @click="logout">
             <el-icon>
               <SwitchButton />
             </el-icon>
-            退出登录
+            退出登录[{{ userName }}]
           </a>
         </span>
       </el-header>
@@ -87,6 +207,31 @@
       </el-container>
     </el-container>
   </div>
+  <!-- 修改密码对话框 -->
+  <el-dialog
+    v-model="dialogFormVisible"
+    title="修改密码"
+    width="30%"
+    @close="resetForm"
+  >
+    <el-form :model="changePwdForm" :rules="pwdRules" ref="pwdChangeRef">
+      <el-form-item label="请输入旧密码" prop="oldPwd">
+        <el-input v-model="changePwdForm.oldPwd" type="password" />
+      </el-form-item>
+      <el-form-item label="请输入新密码" prop="newPwd">
+        <el-input v-model="changePwdForm.newPwd" type="password" />
+      </el-form-item>
+      <el-form-item label="请再次输入新密码" prop="newPwdValid">
+        <el-input v-model="changePwdForm.newPwdValid" type="password" />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <div class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取消</el-button>
+        <el-button type="primary" @click="save"> 确认 </el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
