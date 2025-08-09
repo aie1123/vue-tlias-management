@@ -13,6 +13,7 @@ Tlias智能学习辅助系统是一个基于Vue 3 + Element Plus的管理系统�
 - Element Plus UI组件库
 - Vue Router
 - Axios (HTTP客户端)
+- ECharts (数据可视化)
 
 ## 项目功能模块
 
@@ -22,6 +23,9 @@ Tlias智能学习辅助系统是一个基于Vue 3 + Element Plus的管理系统�
 - 部门管理
 - 班级管理
 - 数据统计展示
+  - 员工信息统计（职位、性别）
+  - 学员信息统计（班级人数、学历分布）
+- 系统日志管理
 
 ## 项目目录结构
 
@@ -30,15 +34,22 @@ src/
   ├── assets/ # 静态资源文件  
   ├── components/ # 公共组件  
   ├── router/ # 路由配置  
+  ├── stores/ # 状态管理  
   ├── utils/ # 工具类  
   ├── views/ # 页面视图  
   │ ├── login/ # 登录页面  
   │ ├── layout/ # 主布局页面  
+  │ ├── index/ # 系统首页  
   │ ├── emp/ # 员工管理页面  
   │ ├── stu/ # 学员管理页面  
   │ ├── dept/ # 部门管理页面  
-  │ └── clazz/ # 班级管理页面  
+  │ ├── clazz/ # 班级管理页面  
+  │ ├── report/ # 数据统计报表页面  
+  │ │ ├── emp/ # 员工统计报表  
+  │ │ └── stu/ # 学员统计报表  
+  │ └── log/ # 系统日志管理页面  
   └── App.vue # 根组件
+
 
 ## 项目配置
 
@@ -74,3 +85,4 @@ npm run lint
 *API请求统一在src/api目录下管理
 *组件和页面使用单文件组件(.vue)格式
 *CSS样式使用scoped防止样式污染
+*图表使用ECharts进行数据可视化展示
